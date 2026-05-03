@@ -14,6 +14,7 @@ mod config;
 mod error;
 mod executor;
 mod mcp;
+mod mempalace;
 mod metrics;
 mod notifications;
 mod plugins;

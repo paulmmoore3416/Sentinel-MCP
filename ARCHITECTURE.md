@@ -16,11 +16,12 @@ graph TB
     E --> G[Kubernetes Operations]
     C --> H[watsonx.ai Integration]
     H --> I[IBM Granite Models]
-    C --> J[Reasoning Engine]
+    C --> J[🧠 Reasoning Engine]
+    J <--> N[📚 MemPalace (Long-Term Memory)]
     J --> K[Security Validator]
     K --> L[Remediation Executor]
     L --> M[Documentation Generator]
-    M --> N[REMEDIATION_LOG.md]
+    M --> N
 ```
 
 ## Core Components
@@ -60,23 +61,32 @@ graph TB
 - Remediation suggestion generation
 - Historical incident correlation
 
-### 4. Reasoning Engine
+### 4. MemPalace Integration
+**Purpose**: Provide long-term, semantic memory for the agent.
+
+**Capabilities**:
+- **Recall**: Retrieve historical remediation reports relevant to a new alert.
+- **Memorize**: Store the outcome of every new remediation, building a knowledge base over time.
+- **Self-Learning**: Enables the agent to improve by consulting past successes and failures.
+
+### 5. Reasoning Engine
 **Purpose**: Orchestrate the analysis and remediation workflow
 
 **Workflow**:
 1. Receive alert from Alert Receiver
 2. **Check circuit breaker** — block if alert type is in Open state
 3. Gather context via MCP tools (logs, disk usage, service/K8s state)
-4. Analyze context with watsonx.ai (IBM Granite models)
-5. **Check Runbook Registry** — use pre-tested runbook if alert pattern matches (Tier 1)
-6. Fall back to AI-generated plan if no runbook match (Tier 2, requires approval)
-7. **Generate rollback commands** for every reversible step
-8. Validate remediation against security constraints
-9. Request user approval for medium/high-risk steps
-10. Execute remediation steps
-11. **Deep verify** — re-probe disk/service state, calculate confidence score
-12. **Update circuit breaker** — record success or failure; trip open after threshold
-13. Generate documentation report
+4. **Recall from MemPalace** — query for historical context on similar alerts
+5. Analyze context with watsonx.ai, now including historical data from MemPalace
+6. **Check Runbook Registry** — use pre-tested runbook if alert pattern matches (Tier 1)
+7. Fall back to AI-generated plan if no runbook match (Tier 2, requires approval)
+8. **Generate rollback commands** for every reversible step
+9. Validate remediation against security constraints
+10. Request user approval for medium/high-risk steps
+11. Execute remediation steps
+12. **Deep verify** — re-probe disk/service state, calculate confidence score
+13. **Update circuit breaker** — record success or failure; trip open after threshold
+14. Generate documentation report and **memorize in MemPalace**
 
 ### 5. Security Validator
 **Purpose**: Ensure all remediation actions are safe and authorized
@@ -126,6 +136,8 @@ sentinel-mcp/
 │   │   ├── mod.rs              # MCP server implementation
 │   │   ├── tools.rs            # MCP tool definitions
 │   │   └── security.rs         # Security validator
+│   ├── mempalace/
+│   │   └── mod.rs              # MemPalace client for long-term memory
 │   ├── alert/
 │   │   └── mod.rs              # Alert receiver and deduplication
 │   ├── watsonx/

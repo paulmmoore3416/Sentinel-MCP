@@ -13,6 +13,7 @@ use crate::alert::Alert;
 use crate::circuit_breaker::{CircuitBreakerConfig, CircuitBreakerManager};
 use crate::executor::{ExecutionResult, RemediationReport};
 use crate::mcp::{self, RiskLevel};
+use crate::mempalace::MemPalaceClient;
 use crate::runbook::RunbookRegistry;
 use crate::watsonx::{Analysis, RemediationSuggestion, WatsonxClient};
 use anyhow::{anyhow, Result};
@@ -154,6 +155,7 @@ pub struct ReasoningEngine {
     config: ReasoningConfig,
     circuit_breakers: Arc<CircuitBreakerManager>,
     runbook_registry: Arc<RunbookRegistry>,
+    mempalace_client: Option<Arc<MemPalaceClient>>,
 }
 
 impl ReasoningEngine {
@@ -173,6 +175,15 @@ impl ReasoningEngine {
             timestamp: chrono::Utc::now().to_rfc3339(),
         };
 
+        // Initialize MemPalace client if configured
+        let mempalace_client = if let Ok(url) = std::env::var("MEMPALACE_URL") {
+            tracing::info!("MemPalace integration enabled at {}", url);
+            Some(Arc::new(MemPalaceClient::new(&url)))
+        } else {
+            tracing::info!("MemPalace integration disabled (MEMPALACE_URL not set)");
+            None
+        };
+
         Ok(Self {
             watsonx_client,
             state: Arc::new(RwLock::new(initial_state)),
@@ -181,6 +192,7 @@ impl ReasoningEngine {
                 CircuitBreakerConfig::default(),
             )),
             runbook_registry: Arc::new(RunbookRegistry::new()),
+            mempalace_client,
         })
     }
 
@@ -340,10 +352,27 @@ impl ReasoningEngine {
         .await?;
 
         let logs_text = context.logs.join("\n");
+        let alert_name = alert.labels.get("alertname").unwrap_or(&"Unknown".to_string());
+
+        // Recall from MemPalace
+        let mut historical_context = String::new();
+        if let Some(mempalace) = &self.mempalace_client {
+            let query = format!("previous incidents for alert '{}'", alert_name);
+            match mempalace.recall(&query).await {
+                Ok(memories) if !memories.is_empty() => {
+                    tracing::info!("Found relevant memories in MemPalace");
+                    historical_context = memories;
+                }
+                Ok(_) => tracing::info!("No relevant memories found in MemPalace"),
+                Err(e) => tracing::warn!("MemPalace recall failed: {}", e),
+            }
+        }
+        
         let context_json = serde_json::json!({
             "system_type": "Linux",
-            "alert_name": alert.labels.get("alertname").unwrap_or(&"Unknown".to_string()),
+            "alert_name": alert_name,
             "severity": alert.labels.get("severity").unwrap_or(&"medium".to_string()),
+            "historical_context": historical_context,
         });
 
         self.watsonx_client
@@ -650,7 +679,7 @@ impl ReasoningEngine {
     async fn generate_report(&self, context: RemediationContext) -> Result<RemediationReport> {
         tracing::info!("Generating remediation report");
 
-        Ok(RemediationReport {
+        let report = RemediationReport {
             id: uuid::Uuid::new_v4().to_string(),
             timestamp: chrono::Utc::now().to_rfc3339(),
             alert_name: context
@@ -659,7 +688,7 @@ impl ReasoningEngine {
                 .get("alertname")
                 .unwrap_or(&"Unknown".to_string())
                 .clone(),
-            root_cause: context.analysis.root_cause,
+            root_cause: context.analysis.root_cause.clone(),
             steps_executed: context
                 .plan
                 .steps
@@ -667,7 +696,34 @@ impl ReasoningEngine {
                 .map(|s| s.description.clone())
                 .collect(),
             success: context.verification.success,
-        })
+        };
+
+        // Memorize the report in MemPalace
+        if let Some(mempalace) = &self.mempalace_client {
+            let memory_content = format!(
+                "Incident: {}\nResult: {}\nRoot Cause: {}\nSteps: {}",
+                report.alert_name,
+                if report.success { "SUCCESS" } else { "FAILURE" },
+                report.root_cause,
+                report.steps_executed.join(", ")
+            );
+            let metadata = serde_json::json!({
+                "alert": context.alert,
+                "success": report.success,
+                "timestamp": report.timestamp,
+            });
+
+            let mempalace_clone = mempalace.clone();
+            tokio::spawn(async move {
+                if let Err(e) = mempalace_clone.memorize(&memory_content, metadata).await {
+                    tracing::error!("Failed to memorize report in MemPalace: {}", e);
+                } else {
+                    tracing::info!("Successfully memorized report in MemPalace");
+                }
+            });
+        }
+
+        Ok(report)
     }
 }
 

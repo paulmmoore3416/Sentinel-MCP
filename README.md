@@ -57,6 +57,9 @@ Built-in security constraints and approval workflows with circuit breakers
 #### 📝 Auto-Documentation
 Generates comprehensive remediation reports automatically
 
+#### 🧠 Self-Learning Memory
+Uses MemPalace to learn from past incidents and improve over time
+
 </td>
 <td width="50%">
 
@@ -104,9 +107,11 @@ graph TB
     C --> H[🤖 watsonx.ai Integration]
     H --> I[💎 IBM Granite Models]
     C --> J[🧠 Reasoning Engine]
+    J <--> N[📚 MemPalace (Long-Term Memory)]
     J --> K[🔐 Security Validator]
     K --> L[⚡ Remediation Executor]
     L --> M[📄 Documentation Generator]
+    M --> N
 ```
 
 ## 🚀 Quick Start
@@ -145,6 +150,9 @@ WATSONX_URL=https://us-south.ml.cloud.ibm.com
 # MCP Server Configuration
 MCP_SERVER_PORT=3000
 MCP_AUTH_TOKEN=your_secure_token_here
+
+# MemPalace Integration (Optional)
+MEMPALACE_URL=http://localhost:8081
 
 # Security Settings
 APPROVAL_REQUIRED=true
