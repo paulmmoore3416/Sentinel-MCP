@@ -1,0 +1,39 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"PodCrashLooping\"}",
+  "status": "firing",
+  "receiver": "sentinel-mcp",
+  "groupLabels": {
+    "alertname": "PodCrashLooping"
+  },
+  "commonLabels": {
+    "alertname": "PodCrashLooping",
+    "severity": "warning",
+    "namespace": "default",
+    "pod": "app-deployment-abc123",
+    "resource_type": "pod"
+  },
+  "commonAnnotations": {
+    "summary": "Pod is in CrashLoopBackOff",
+    "description": "Pod app-deployment-abc123 in namespace default is crash looping"
+  },
+  "externalURL": "http://prometheus:9090",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "PodCrashLooping",
+      "severity": "warning",
+      "namespace": "default",
+      "pod": "app-deployment-abc123",
+      "resource_type": "pod"
+    },
+    "annotations": {
+      "summary": "Pod is in CrashLoopBackOff",
+      "description": "Pod app-deployment-abc123 in namespace default is crash looping"
+    },
+    "startsAt": "2026-05-02T18:10:00Z",
+    "endsAt": "0001-01-01T00:00:00Z",
+    "generatorURL": "http://prometheus:9090/graph?g0.expr=kube_pod_container_status_restarts_total",
+    "fingerprint": "ghi789jkl012"
+  }]
+}

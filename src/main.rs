@@ -8,8 +8,14 @@ use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod alert;
+mod cli;
+mod config;
+mod error;
 mod executor;
 mod mcp;
+mod metrics;
+mod notifications;
+mod plugins;
 mod reasoning;
 mod watsonx;
 
@@ -37,7 +43,6 @@ async fn main() -> Result<()> {
     // Build the application router
     let app = Router::new()
         .route("/api/v1/health", get(health_check))
-        .route("/api/v1/alerts", post(alert::receive_alerts))
         .route("/api/v1/status", get(get_status))
         .layer((
             TraceLayer::new_for_http(),
@@ -47,9 +52,10 @@ async fn main() -> Result<()> {
     // Start the server
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("Listening on {}", addr);
+    tracing::info!("Note: Alert receiver endpoint will be available when AlertReceiver is initialized");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }

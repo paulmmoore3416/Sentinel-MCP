@@ -1,0 +1,37 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"DiskSpaceLow\"}",
+  "status": "firing",
+  "receiver": "sentinel-mcp",
+  "groupLabels": {
+    "alertname": "DiskSpaceLow"
+  },
+  "commonLabels": {
+    "alertname": "DiskSpaceLow",
+    "severity": "warning",
+    "instance": "server-01",
+    "filesystem": "/var"
+  },
+  "commonAnnotations": {
+    "summary": "Disk space is critically low",
+    "description": "Filesystem /var is at 95% capacity on server-01"
+  },
+  "externalURL": "http://prometheus:9090",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "DiskSpaceLow",
+      "severity": "warning",
+      "instance": "server-01",
+      "filesystem": "/var"
+    },
+    "annotations": {
+      "summary": "Disk space is critically low",
+      "description": "Filesystem /var is at 95% capacity on server-01"
+    },
+    "startsAt": "2026-05-02T18:00:00Z",
+    "endsAt": "0001-01-01T00:00:00Z",
+    "generatorURL": "http://prometheus:9090/graph?g0.expr=node_filesystem_avail_bytes",
+    "fingerprint": "abc123def456"
+  }]
+}

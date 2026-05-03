@@ -1,0 +1,72 @@
+# Sentinel-MCP Configuration Example
+# Copy this file to config.yaml and customize for your environment
+
+server:
+  host: "0.0.0.0"
+  port: 3000
+  workers: 4  # Number of worker threads (defaults to CPU count)
+  timeout_seconds: 30
+  enable_cors: true
+  cors_origins:
+    - "*"  # In production, specify exact origins
+
+watsonx:
+  api_key: "your_watsonx_api_key_here"
+  project_id: "your_project_id_here"
+  url: "https://us-south.ml.cloud.ibm.com"
+  model: "ibm/granite-13b-instruct-v2"
+  max_tokens: 1024
+  temperature: 0.7
+  timeout_seconds: 60
+
+security:
+  auth_token: null  # Optional: Set to require authentication
+  enable_tls: false
+  cert_path: null
+  key_path: null
+  allowed_commands:
+    - "systemctl"
+    - "kubectl"
+    - "docker"
+    - "find"
+    - "du"
+  blocked_commands:
+    - "rm -rf /"
+    - "dd"
+    - "mkfs"
+    - "fdisk"
+  max_command_length: 1000
+
+remediation:
+  auto_approve_low_risk: true
+  auto_approve_medium_risk: false
+  approval_timeout_seconds: 300
+  max_execution_time_seconds: 600
+  enable_rollback: true
+  dry_run_mode: false  # Set to true for testing without executing commands
+  max_concurrent_remediations: 5
+
+plugins:
+  enabled: true
+  plugin_dir: "./plugins"
+  auto_load: true
+  enabled_plugins:
+    - "disk-cleanup"
+    - "service-restart"
+    - "k8s-remediation"
+
+logging:
+  level: "info"  # trace, debug, info, warn, error
+  format: "json"  # json or text
+  output: "stdout"  # stdout, file, or both
+  file_path: null  # Set to enable file logging
+  max_file_size_mb: 100
+  max_files: 10
+
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  collect_interval_seconds: 60
+
+# Made with Bob

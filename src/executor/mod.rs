@@ -1,24 +1,22 @@
 //! Remediation executor module
 //! 
-//! This module handles the safe execution of remediation commands
-//! and generates documentation for all actions taken.
+//! This module handles the execution of remediation commands and
+//! generates documentation of the remediation process.
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::Path;
 
-/// Remediation executor
-/// This will be fully implemented in Phase 3 using prompt 05-alert-and-docs.md
-pub struct RemediationExecutor {
-    // Fields will be added in Phase 3
-}
+pub mod documentation;
 
 /// Execution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionResult {
     pub success: bool,
+    pub exit_code: i32,
     pub stdout: String,
     pub stderr: String,
-    pub exit_code: i32,
     pub duration_ms: u64,
 }
 
@@ -33,34 +31,49 @@ pub struct RemediationReport {
     pub success: bool,
 }
 
-impl RemediationExecutor {
-    pub fn new() -> Result<Self> {
-        Ok(Self {})
+impl RemediationReport {
+    /// Save report to file
+    pub fn save_to_file(&self, path: &Path) -> Result<()> {
+        let json = serde_json::to_string_pretty(self)?;
+        fs::write(path, json)?;
+        Ok(())
     }
 
-    /// Execute a command safely
-    /// Placeholder - will be implemented in Phase 3
-    pub async fn execute(&self, _command: &str, _dry_run: bool) -> Result<ExecutionResult> {
-        Ok(ExecutionResult {
-            success: true,
-            stdout: String::new(),
-            stderr: String::new(),
-            exit_code: 0,
-            duration_ms: 0,
-        })
+    /// Load report from file
+    pub fn load_from_file(path: &Path) -> Result<Self> {
+        let json = fs::read_to_string(path)?;
+        let report = serde_json::from_str(&json)?;
+        Ok(report)
     }
+}
 
-    /// Generate remediation report
-    /// Placeholder - will be implemented in Phase 3
-    pub async fn generate_report(&self, _context: &str) -> Result<RemediationReport> {
-        Ok(RemediationReport {
-            id: uuid::Uuid::new_v4().to_string(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-            alert_name: "Placeholder".to_string(),
-            root_cause: "Placeholder".to_string(),
-            steps_executed: vec![],
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_save_and_load_report() {
+        let report = RemediationReport {
+            id: "test-123".to_string(),
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+            alert_name: "DiskSpaceLow".to_string(),
+            root_cause: "Log files filling disk".to_string(),
+            steps_executed: vec!["Rotated logs".to_string()],
             success: true,
-        })
+        };
+
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let path = temp_file.path();
+
+        // Save
+        report.save_to_file(path).unwrap();
+
+        // Load
+        let loaded = RemediationReport::load_from_file(path).unwrap();
+        assert_eq!(loaded.id, report.id);
+        assert_eq!(loaded.alert_name, report.alert_name);
     }
 }
 
