@@ -101,6 +101,10 @@ pub struct SystemContext {
     pub disk_usage: Option<mcp::tools::DiskUsage>,
     pub service_status: Vec<mcp::tools::ServiceStatus>,
     pub k8s_status: Option<mcp::tools::K8sStatus>,
+    pub network_status: Option<mcp::tools::NetworkDiagnostics>,
+    pub db_status: Option<mcp::tools::DatabaseMetrics>,
+    pub node_status: Option<mcp::tools::NodeDiagnostics>,
+    pub tls_status: Option<mcp::tools::TlsVerification>,
 }
 
 /// Remediation plan
@@ -286,6 +290,10 @@ impl ReasoningEngine {
             disk_usage: None,
             service_status: Vec::new(),
             k8s_status: None,
+            network_status: None,
+            db_status: None,
+            node_status: None,
+            tls_status: None,
         };
 
         if let Some(filesystem) = alert.labels.get("filesystem") {
@@ -339,6 +347,41 @@ impl ReasoningEngine {
             }
         }
 
+        if let Some(endpoint) = alert.labels.get("endpoint") {
+            if alert.labels.get("alertname").map(|s| s.as_str()) == Some("EndpointUnreachable") {
+                if let Ok(response) = mcp::tools::run_network_diagnostics(endpoint).await {
+                    if let Some(data) = response.data {
+                        context.network_status = Some(data);
+                    }
+                }
+            }
+            if alert.labels.get("alertname").map(|s| s.as_str()) == Some("TLSCertificateExpiring") {
+                if let Ok(response) = mcp::tools::check_tls_certificate(endpoint).await {
+                    if let Some(data) = response.data {
+                        context.tls_status = Some(data);
+                    }
+                }
+            }
+        }
+
+        if alert.labels.get("alertname").map(|s| s.as_str()) == Some("DatabaseHighConnections") {
+            if let Ok(response) = mcp::tools::check_db_metrics().await {
+                if let Some(data) = response.data {
+                    context.db_status = Some(data);
+                }
+            }
+        }
+
+        if let Some(node) = alert.labels.get("node") {
+            if alert.labels.get("alertname").map(|s| s.as_str()) == Some("NodeNotReady") {
+                if let Ok(response) = mcp::tools::describe_node(node).await {
+                    if let Some(data) = response.data {
+                        context.node_status = Some(data);
+                    }
+                }
+            }
+        }
+
         Ok(context)
     }
 
@@ -352,7 +395,8 @@ impl ReasoningEngine {
         .await?;
 
         let logs_text = context.logs.join("\n");
-        let alert_name = alert.labels.get("alertname").unwrap_or(&"Unknown".to_string());
+        let unknown_alert = "Unknown".to_string();
+        let alert_name = alert.labels.get("alertname").unwrap_or(&unknown_alert);
 
         // Recall from MemPalace
         let mut historical_context = String::new();

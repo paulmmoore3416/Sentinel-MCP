@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "DatabaseHighConnections",
+      "severity": "warning",
+      "database": "main-db"
+    },
+    "annotations": {
+      "summary": "High database connection pool usage",
+      "description": "Database main-db is using 95% of its connection pool"
+    },
+    "startsAt": "2026-05-03T10:05:00Z"
+  }]
+}

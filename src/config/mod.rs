@@ -373,7 +373,9 @@ mod tests {
     
     #[test]
     fn test_default_config() {
-        let config = Config::default();
+        let mut config = Config::default();
+        config.watsonx.api_key = "test".to_string();
+        config.watsonx.project_id = "test".to_string();
         assert!(config.validate().is_ok());
     }
     
@@ -386,7 +388,9 @@ mod tests {
     
     #[test]
     fn test_config_save_load() {
-        let config = Config::default();
+        let mut config = Config::default();
+        config.watsonx.api_key = "test".to_string();
+        config.watsonx.project_id = "test".to_string();
         let mut temp_file = NamedTempFile::new().unwrap();
         let path = temp_file.path().with_extension("yaml");
         

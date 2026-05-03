@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "TLSCertificateExpiring",
+      "severity": "warning",
+      "endpoint": "www.example.com"
+    },
+    "annotations": {
+      "summary": "TLS Certificate expiring soon",
+      "description": "The TLS certificate for www.example.com expires in 7 days"
+    },
+    "startsAt": "2026-05-03T10:15:00Z"
+  }]
+}

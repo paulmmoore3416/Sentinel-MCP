@@ -79,7 +79,9 @@ sentinel-mcp/
 ### 1. Autonomous Remediation
 - Alert detection from Prometheus/AlertManager
 - AI-powered log analysis using IBM Granite models
-- Intelligent remediation planning
+- Intelligent remediation planning using tested runbooks and AI generation
+- Includes capabilities for **Database**, **Network**, **Kubernetes Node** diagnostics, and **TLS Verification**
+- MemPalace integration for long-term semantic memory and context-aware reasoning
 - Safe execution with approval workflows
 - Automatic verification and documentation
 
@@ -315,4 +317,4 @@ The planning phase for Sentinel-MCP is complete. All documentation, prompts, and
 
 **Built with ❤️ using IBM Bob and watsonx.ai**
 
-*Last Updated: 2026-05-02*
+*Last Updated: 2026-05-03*

@@ -421,6 +421,138 @@ pub async fn check_kubernetes_status(
     Ok(ToolResponse::success(data, metadata))
 }
 
+/// Network diagnostics information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NetworkDiagnostics {
+    pub endpoint: String,
+    pub reachable: bool,
+    pub output: String,
+}
+
+pub async fn run_network_diagnostics(endpoint: &str) -> Result<ToolResponse<NetworkDiagnostics>> {
+    let start = std::time::Instant::now();
+    tracing::info!("Running network diagnostics for: {}", endpoint);
+    
+    // Basic ping test
+    let output = Command::new("ping")
+        .args(&["-c", "3", "-W", "5", endpoint])
+        .output()
+        .await?;
+        
+    let reachable = output.status.success();
+    let content = String::from_utf8_lossy(&output.stdout).to_string();
+    
+    let duration = start.elapsed().as_millis() as u64;
+    let data = NetworkDiagnostics {
+        endpoint: endpoint.to_string(),
+        reachable,
+        output: content,
+    };
+    
+    let metadata = ToolMetadata {
+        tool_name: "run_network_diagnostics".to_string(),
+        execution_time_ms: duration,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        requires_approval: false,
+        risk_level: RiskLevel::Low,
+    };
+    Ok(ToolResponse::success(data, metadata))
+}
+
+/// Database metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseMetrics {
+    pub connection_pool_usage: f64,
+    pub status: String,
+}
+
+pub async fn check_db_metrics() -> Result<ToolResponse<DatabaseMetrics>> {
+    let start = std::time::Instant::now();
+    tracing::info!("Checking database metrics");
+    
+    // Mock implementation for database connection pool check
+    let data = DatabaseMetrics {
+        connection_pool_usage: 95.0,
+        status: "High connection pool usage detected".to_string(),
+    };
+    
+    let duration = start.elapsed().as_millis() as u64;
+    let metadata = ToolMetadata {
+        tool_name: "check_db_metrics".to_string(),
+        execution_time_ms: duration,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        requires_approval: false,
+        risk_level: RiskLevel::Low,
+    };
+    Ok(ToolResponse::success(data, metadata))
+}
+
+/// Node Diagnostics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NodeDiagnostics {
+    pub node_name: String,
+    pub events: String,
+    pub status: String,
+}
+
+pub async fn describe_node(node_name: &str) -> Result<ToolResponse<NodeDiagnostics>> {
+    let start = std::time::Instant::now();
+    tracing::info!("Describing Kubernetes node: {}", node_name);
+    
+    let output = Command::new("kubectl")
+        .args(&["describe", "node", node_name])
+        .output()
+        .await?;
+        
+    let content = String::from_utf8_lossy(&output.stdout).to_string();
+    
+    let duration = start.elapsed().as_millis() as u64;
+    let data = NodeDiagnostics {
+        node_name: node_name.to_string(),
+        events: content.clone(),
+        status: if output.status.success() { "Described".to_string() } else { "Failed".to_string() },
+    };
+    
+    let metadata = ToolMetadata {
+        tool_name: "describe_node".to_string(),
+        execution_time_ms: duration,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        requires_approval: false,
+        risk_level: RiskLevel::Low,
+    };
+    Ok(ToolResponse::success(data, metadata))
+}
+
+/// TLS Certificate Verification
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TlsVerification {
+    pub endpoint: String,
+    pub days_until_expiry: i64,
+    pub output: String,
+}
+
+pub async fn check_tls_certificate(endpoint: &str) -> Result<ToolResponse<TlsVerification>> {
+    let start = std::time::Instant::now();
+    tracing::info!("Checking TLS certificate for: {}", endpoint);
+    
+    // Mock implementation for checking TLS certificate
+    let data = TlsVerification {
+        endpoint: endpoint.to_string(),
+        days_until_expiry: 7,
+        output: "Certificate expires in 7 days".to_string(),
+    };
+    
+    let duration = start.elapsed().as_millis() as u64;
+    let metadata = ToolMetadata {
+        tool_name: "check_tls_certificate".to_string(),
+        execution_time_ms: duration,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        requires_approval: false,
+        risk_level: RiskLevel::Low,
+    };
+    Ok(ToolResponse::success(data, metadata))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

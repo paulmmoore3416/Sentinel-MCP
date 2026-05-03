@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "NodeNotReady",
+      "severity": "critical",
+      "node": "k8s-worker-03"
+    },
+    "annotations": {
+      "summary": "Kubernetes Node Not Ready",
+      "description": "Node k8s-worker-03 has been in NotReady state for >5 minutes"
+    },
+    "startsAt": "2026-05-03T10:10:00Z"
+  }]
+}

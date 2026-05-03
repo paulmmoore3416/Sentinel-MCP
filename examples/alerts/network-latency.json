@@ -1,0 +1,18 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "EndpointUnreachable",
+      "severity": "critical",
+      "endpoint": "api.example.com",
+      "service": "payment-gateway"
+    },
+    "annotations": {
+      "summary": "External API endpoint unreachable",
+      "description": "The payment-gateway service cannot reach api.example.com"
+    },
+    "startsAt": "2026-05-03T10:00:00Z"
+  }]
+}
