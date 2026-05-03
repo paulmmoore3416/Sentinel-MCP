@@ -4,6 +4,7 @@
 //! for safe rollback of remediation operations.
 
 use anyhow::{anyhow, Result};
+use tokio::process::Command;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -253,12 +254,23 @@ impl SnapshotManager {
             None
         };
 
+        let memory_usage = if let Some(p) = pid {
+            let output = Command::new("ps").args(&["-o", "rss=", "-p", &p.to_string()]).output().await.unwrap_or_else(|_| std::process::Output {
+                status: std::os::unix::process::ExitStatusExt::from_raw(0),
+                stdout: b"".to_vec(),
+                stderr: b"".to_vec(),
+            });
+            String::from_utf8_lossy(&output.stdout).trim().parse::<u64>().ok().map(|kb| kb * 1024)
+        } else {
+            None
+        };
+
         Ok(ServiceState {
             name: service_name.to_string(),
             active,
             enabled,
             pid,
-            memory_usage: None, // TODO: Capture memory usage
+            memory_usage,
         })
     }
 

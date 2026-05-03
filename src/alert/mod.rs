@@ -270,11 +270,13 @@ pub async fn receive_alerts(
 
 /// HTTP handler for health check
 async fn health_check() -> Json<HealthResponse> {
-    // Simple uptime calculation (would need to track start time in production)
+    static START_TIME: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+    let uptime = START_TIME.get_or_init(std::time::Instant::now).elapsed().as_secs();
+
     Json(HealthResponse {
         status: "healthy".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        uptime_seconds: 0, // TODO: Track actual uptime
+        uptime_seconds: uptime,
     })
 }
 
@@ -306,6 +308,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_duplicate_detection() {
+        // WatsonxClient::new() requires these env vars; set dummies for construction only
+        std::env::set_var("WATSONX_API_KEY", "test-key-unit");
+        std::env::set_var("WATSONX_PROJECT_ID", "test-project-unit");
         let config = AlertConfig::default();
         let reasoning_config = ReasoningConfig::default();
         let receiver = AlertReceiver::new(config, reasoning_config).unwrap();

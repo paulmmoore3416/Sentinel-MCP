@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentinel-mcp-config
+  namespace: sentinel-system
+  labels:
+    app: sentinel-mcp
+data:
+  config.yaml: |
+    server:
+      host: "0.0.0.0"
+      port: 3000
+      workers: 4
+      timeout_seconds: 30
+      enable_cors: true
+      cors_origins:
+        - "*"
+
+    security:
+      auth_token: null
+      enable_tls: false
+      allowed_commands:
+        - "systemctl"
+        - "kubectl"
+        - "docker"
+        - "find"
+        - "du"
+      blocked_commands:
+        - "rm -rf /"
+        - "dd"
+        - "mkfs"
+        - "fdisk"
+      max_command_length: 1000
+
+    remediation:
+      auto_approve_low_risk: true
+      auto_approve_medium_risk: false
+      approval_timeout_seconds: 300
+      max_execution_time_seconds: 600
+      enable_rollback: true
+      dry_run_mode: false
+      max_concurrent_remediations: 5
+
+    plugins:
+      enabled: true
+      plugin_dir: "./plugins"
+      auto_load: true
+      enabled_plugins:
+        - "disk-cleanup"
+        - "service-restart"
+        - "k8s-remediation"
+
+    logging:
+      level: "info"
+      format: "json"
+      output: "stdout"
+
+    metrics:
+      enabled: true
+      port: 9090
+      path: "/metrics"
+      collect_interval_seconds: 60

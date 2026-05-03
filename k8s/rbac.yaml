@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-mcp-sa
+  namespace: sentinel-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sentinel-mcp-role
+rules:
+- apiGroups: ["", "apps", "batch", "extensions", "networking.k8s.io"]
+  resources: ["pods", "services", "deployments", "replicasets", "statefulsets", "daemonsets", "nodes", "events", "persistentvolumeclaims", "ingresses"]
+  verbs: ["get", "list", "watch", "describe", "delete", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-mcp-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: sentinel-mcp-sa
+  namespace: sentinel-system
+roleRef:
+  kind: ClusterRole
+  name: sentinel-mcp-role
+  apiGroup: rbac.authorization.k8s.io

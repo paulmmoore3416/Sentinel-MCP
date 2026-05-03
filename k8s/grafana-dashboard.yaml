@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentinel-mcp-grafana-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  sentinel-dashboard.json: |
+    {
+      "title": "Sentinel-MCP Overview",
+      "uid": "sentinel-mcp-overview",
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Total Processed Alerts",
+          "targets": [
+            {
+              "expr": "sentinel_alerts_received_total"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Success Rate",
+          "targets": [
+            {
+              "expr": "sentinel_remediations_successful_total / sentinel_remediations_executed_total * 100"
+            }
+          ]
+        }
+      ]
+    }

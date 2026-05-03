@@ -244,7 +244,8 @@ impl CliHandler {
         
         if daemon {
             println!("🔧 Running in daemon mode");
-            // TODO: Implement daemon mode
+            let pid = std::process::id();
+            let _ = std::fs::write("/tmp/sentinel-mcp.pid", pid.to_string());
         }
         
         println!("✅ Server started successfully");
@@ -261,7 +262,14 @@ impl CliHandler {
             println!("⚠️  Force stop requested");
         }
         
-        // TODO: Implement server stop logic
+        if let Ok(pid_str) = std::fs::read_to_string("/tmp/sentinel-mcp.pid") {
+            if let Ok(pid) = pid_str.parse::<i32>() {
+                let sig = if force { "-9" } else { "-15" };
+                let _ = std::process::Command::new("kill").args(&[sig, &pid.to_string()]).status();
+                let _ = std::fs::remove_file("/tmp/sentinel-mcp.pid");
+            }
+        }
+        
         println!("✅ Server stopped");
         Ok(())
     }
@@ -296,7 +304,21 @@ impl CliHandler {
         println!("✅ Alert validation passed");
         println!("🔄 Processing alert...");
         
-        // TODO: Actually process the alert
+        // Parse and process alert
+        println!("   (Dispatching alert to Reasoning Engine)");
+        let reasoning_config = crate::reasoning::ReasoningConfig::default();
+        if let Ok(engine) = crate::reasoning::ReasoningEngine::new(reasoning_config) {
+            if let Ok(parsed_alert) = serde_json::from_str::<crate::alert::AlertManagerPayload>(&content) {
+                if let Some(alert) = parsed_alert.alerts.into_iter().next() {
+                    let _ = engine.process_alert(alert).await;
+                }
+            } else {
+                // Try parsing as single Alert
+                if let Ok(alert) = serde_json::from_str::<crate::alert::Alert>(&content) {
+                    let _ = engine.process_alert(alert).await;
+                }
+            }
+        }
         
         println!("✅ Test completed successfully");
         Ok(())
@@ -391,7 +413,8 @@ impl CliHandler {
             }
             ConfigCommands::Edit => {
                 println!("📝 Opening configuration editor...");
-                // TODO: Open editor
+                let editor = std::env::var("EDITOR").unwrap_or_else(|_| "nano".to_string());
+                let _ = std::process::Command::new(editor).arg("config.yaml").status();
             }
             ConfigCommands::Reset { yes } => {
                 if !yes {
@@ -414,7 +437,7 @@ impl CliHandler {
     async fn show_logs(&self, lines: usize, follow: bool, level: Option<String>) -> Result<()> {
         println!("📜 Showing last {} log entries", lines);
         
-        if let Some(lvl) = level {
+        if let Some(ref lvl) = level {
             println!("🔍 Filtering by level: {}", lvl);
         }
         
@@ -422,10 +445,18 @@ impl CliHandler {
             println!("👁️  Following logs (Ctrl+C to stop)...");
         }
         
-        // TODO: Implement actual log reading
-        println!("[2024-01-01 12:00:00] INFO  Starting Sentinel-MCP");
-        println!("[2024-01-01 12:00:01] INFO  Plugins loaded: 3");
-        println!("[2024-01-01 12:00:02] INFO  Server listening on :3000");
+        if let Ok(content) = std::fs::read_to_string("logs/sentinel-mcp.log") {
+            let log_lines: Vec<&str> = content.lines().collect();
+            let start = log_lines.len().saturating_sub(lines);
+            for line in log_lines.iter().skip(start) {
+                if let Some(ref lvl) = level {
+                    if !line.contains(&lvl.to_uppercase()) { continue; }
+                }
+                println!("{}", line);
+            }
+        } else {
+            println!("⚠️ Log file logs/sentinel-mcp.log not found.");
+        }
         
         Ok(())
     }

@@ -468,12 +468,23 @@ pub struct DatabaseMetrics {
 
 pub async fn check_db_metrics() -> Result<ToolResponse<DatabaseMetrics>> {
     let start = std::time::Instant::now();
-    tracing::info!("Checking database metrics");
+    tracing::info!("Checking database metrics via network connections");
     
-    // Mock implementation for database connection pool check
+    // Use `ss` to count established connections to common DB ports (PostgreSQL 5432, MySQL 3306)
+    let output = Command::new("sh")
+        .args(&["-c", "ss -tn state established | awk '{print $4}' | grep -E ':5432$|:3306$' | wc -l"])
+        .output()
+        .await?;
+        
+    let content = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let connections: u32 = content.parse().unwrap_or(0);
+    
+    // Assume 100 is max connection pool for this metric
+    let usage = (connections as f64 / 100.0) * 100.0;
+    
     let data = DatabaseMetrics {
-        connection_pool_usage: 95.0,
-        status: "High connection pool usage detected".to_string(),
+        connection_pool_usage: usage.min(100.0),
+        status: format!("Found {} active database connections", connections),
     };
     
     let duration = start.elapsed().as_millis() as u64;
@@ -535,11 +546,21 @@ pub async fn check_tls_certificate(endpoint: &str) -> Result<ToolResponse<TlsVer
     let start = std::time::Instant::now();
     tracing::info!("Checking TLS certificate for: {}", endpoint);
     
-    // Mock implementation for checking TLS certificate
+    // Real implementation using openssl to fetch certificate expiry
+    let cmd = format!(
+        "expr $(date -d \"$(echo | openssl s_client -servername {} -connect {}:443 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)\" +%s 2>/dev/null) - $(date +%s) 2>/dev/null",
+        endpoint, endpoint
+    );
+    let output = Command::new("sh").args(&["-c", &cmd]).output().await?;
+    
+    let content = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let seconds_until_expiry: i64 = content.parse().unwrap_or(0);
+    let days_until_expiry = if seconds_until_expiry > 0 { seconds_until_expiry / 86400 } else { 0 };
+    
     let data = TlsVerification {
         endpoint: endpoint.to_string(),
-        days_until_expiry: 7,
-        output: "Certificate expires in 7 days".to_string(),
+        days_until_expiry,
+        output: if content.is_empty() { "Failed to retrieve certificate details".to_string() } else { format!("Certificate expires in {} days", days_until_expiry) },
     };
     
     let duration = start.elapsed().as_millis() as u64;
@@ -807,9 +828,17 @@ pub async fn check_replication_lag(database: &str) -> Result<ToolResponse<Replic
     let start = std::time::Instant::now();
     tracing::info!("Checking replication lag for: {}", database);
     
+    // If PostgreSQL's psql is present, attempt to execute a basic query, otherwise use generic fallback
+    let cmd = format!(
+        "psql -d {} -c \"SELECT extract(epoch from now() - pg_last_xact_replay_timestamp()) AS lag;\" 2>/dev/null || echo 'Replication lag unavailable or PostgreSQL not installed locally'",
+        database
+    );
+    let output = Command::new("sh").args(&["-c", &cmd]).output().await?;
+    let content = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    
     let data = ReplicationLag {
         database: database.to_string(),
-        lag_info: "Mocked replication lag: 0s".to_string(),
+        lag_info: content,
     };
     
     let metadata = ToolMetadata {
@@ -832,9 +861,14 @@ pub async fn inspect_message_queue_depth(queue_name: &str) -> Result<ToolRespons
     let start = std::time::Instant::now();
     tracing::info!("Inspecting message queue depth for: {}", queue_name);
     
+    let cmd = format!("rabbitmqctl list_queues name messages 2>/dev/null | grep '{}' | awk '{{print $2}}'", queue_name);
+    let output = Command::new("sh").args(&["-c", &cmd]).output().await?;
+    let content = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let depth: usize = content.parse().unwrap_or(0);
+    
     let data = QueueDepth {
         queue_name: queue_name.to_string(),
-        depth: 42,
+        depth,
     };
     
     let metadata = ToolMetadata {
@@ -859,10 +893,17 @@ pub async fn detect_config_drift(file_path: &str) -> Result<ToolResponse<ConfigD
     let start = std::time::Instant::now();
     tracing::info!("Detecting config drift for: {}", file_path);
     
+    // Use git diff to see if the file has changed from source control, fallback to checking stat mtime
+    let cmd = format!("git diff --name-only {} 2>/dev/null || stat -c 'Last modified: %y' {}", file_path, file_path);
+    let output = Command::new("sh").args(&["-c", &cmd]).output().await?;
+    let content = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    
+    let has_drift = !content.is_empty() && !content.starts_with("Last modified:");
+    
     let data = ConfigDrift {
         file_path: file_path.to_string(),
-        has_drift: false,
-        details: "No config drift detected against known good state.".to_string(),
+        has_drift,
+        details: if has_drift { "Config file differs from git version control".to_string() } else { format!("Status: {}", content) },
     };
     
     let metadata = ToolMetadata {

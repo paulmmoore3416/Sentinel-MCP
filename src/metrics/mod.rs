@@ -332,10 +332,21 @@ impl HealthChecker {
     
     /// Check watsonx connection
     async fn check_watsonx(&self) -> ComponentHealth {
-        // TODO: Implement actual watsonx health check
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap_or_default();
+        let is_healthy = client
+            .get("https://us-south.ml.cloud.ibm.com")
+            .send()
+            .await
+            .map(|r| r.status().is_success())
+            .unwrap_or(false);
+
+        // Unreachable external API = degraded (AI features offline), not unhealthy (system broken)
         ComponentHealth {
-            status: "healthy".to_string(),
-            message: Some("API responding".to_string()),
+            status: if is_healthy { "healthy" } else { "degraded" }.to_string(),
+            message: Some(if is_healthy { "API responding".to_string() } else { "API unreachable".to_string() }),
             last_check: chrono::Utc::now().to_rfc3339(),
         }
     }
@@ -423,7 +434,7 @@ mod tests {
         let checker = HealthChecker::new(metrics);
         
         let health = checker.check().await;
-        assert_eq!(health.status, "healthy");
+        assert_ne!(health.status, "unhealthy", "system should not be unhealthy in test env");
     }
 }
 
