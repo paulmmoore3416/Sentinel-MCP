@@ -327,21 +327,28 @@ mod tests {
     
     #[tokio::test]
     async fn test_retry_success() {
-        let mut attempts = 0;
+        use std::sync::{Arc, Mutex};
+        let attempts = Arc::new(Mutex::new(0u32));
+        let attempts_clone = attempts.clone();
         let result = retry_with_backoff(
             RetryConfig::default(),
-            || async {
-                attempts += 1;
-                if attempts < 2 {
-                    Err("temporary failure")
-                } else {
-                    Ok("success")
+            move || {
+                let attempts = attempts_clone.clone();
+                async move {
+                    let mut n = attempts.lock().unwrap();
+                    *n += 1;
+                    if *n < 2 {
+                        Err("temporary failure")
+                    } else {
+                        Ok("success")
+                    }
                 }
-            }
-        ).await;
-        
+            },
+        )
+        .await;
+
         assert!(result.is_ok());
-        assert_eq!(attempts, 2);
+        assert_eq!(*attempts.lock().unwrap(), 2);
     }
     
     #[tokio::test]

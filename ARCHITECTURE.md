@@ -65,13 +65,18 @@ graph TB
 
 **Workflow**:
 1. Receive alert from Alert Receiver
-2. Gather context via MCP tools (logs, system state)
-3. Send context to watsonx.ai for analysis
-4. Parse AI response and extract remediation steps
-5. Validate remediation against security constraints
-6. Request user approval (if required)
-7. Execute remediation
-8. Verify success and document outcome
+2. **Check circuit breaker** — block if alert type is in Open state
+3. Gather context via MCP tools (logs, disk usage, service/K8s state)
+4. Analyze context with watsonx.ai (IBM Granite models)
+5. **Check Runbook Registry** — use pre-tested runbook if alert pattern matches (Tier 1)
+6. Fall back to AI-generated plan if no runbook match (Tier 2, requires approval)
+7. **Generate rollback commands** for every reversible step
+8. Validate remediation against security constraints
+9. Request user approval for medium/high-risk steps
+10. Execute remediation steps
+11. **Deep verify** — re-probe disk/service state, calculate confidence score
+12. **Update circuit breaker** — record success or failure; trip open after threshold
+13. Generate documentation report
 
 ### 5. Security Validator
 **Purpose**: Ensure all remediation actions are safe and authorized
@@ -122,17 +127,21 @@ sentinel-mcp/
 │   │   ├── tools.rs            # MCP tool definitions
 │   │   └── security.rs         # Security validator
 │   ├── alert/
-│   │   ├── mod.rs              # Alert receiver
-│   │   └── parser.rs           # Alert parsing logic
+│   │   └── mod.rs              # Alert receiver and deduplication
 │   ├── watsonx/
-│   │   ├── mod.rs              # watsonx.ai client
+│   │   ├── mod.rs              # watsonx.ai client (IBM Granite)
 │   │   └── prompts.rs          # Prompt templates
 │   ├── reasoning/
-│   │   ├── mod.rs              # Reasoning engine
-│   │   └── workflow.rs         # State machine
+│   │   └── mod.rs              # Reasoning engine + state machine
+│   ├── circuit_breaker/
+│   │   └── mod.rs              # Per-alert-type circuit breakers
+│   ├── runbook/
+│   │   └── mod.rs              # Pre-tested runbook registry
+│   ├── snapshot/
+│   │   └── mod.rs              # System state capture for rollback
 │   └── executor/
 │       ├── mod.rs              # Remediation executor
-│       └── rollback.rs         # Rollback support
+│       └── documentation.rs    # Report generation
 ├── tests/
 │   ├── integration/            # Integration tests
 │   └── scenarios/              # Failure scenarios
@@ -164,6 +173,40 @@ sentinel-mcp/
 ├── README.md                   # Project documentation
 └── LICENSE                     # License file
 ```
+
+## Safety Architecture: Write Authority & Rollback Boundaries
+
+Remediation agents need clean rollback boundaries when a diagnosis is wrong. Sentinel-MCP uses a **graduated trust model** and three defensive layers:
+
+### Graduated Trust Model
+
+```
+Tier 1 — Runbook Registry   (src/runbook/)
+  Exact alert-pattern match → pre-tested steps with rollback commands
+  Success rate tracked per runbook (e.g. ServiceDown: 85 %)
+
+Tier 2 — AI-Generated Steps  (src/reasoning/)
+  No runbook match → watsonx.ai generates steps dynamically
+  Requires explicit human approval for medium/high-risk ops
+  Rollback commands auto-derived where possible (systemctl, apt-get, etc.)
+```
+
+### Circuit Breakers  (`src/circuit_breaker/`)
+
+Each alert type has its own circuit breaker:
+- **Closed** — normal execution allowed
+- **Open** — execution blocked after N consecutive failures; alert escalated to human
+- **HalfOpen** — single probe allowed after timeout; closes on success, re-opens on failure
+
+### System Snapshots  (`src/snapshot/`)
+
+Pre-execution snapshots capture filesystem metadata, service states, and K8s resources. The `SnapshotDiff` API compares before/after states to detect unexpected side effects and provide clean rollback data.
+
+### Deep Verification  (`src/reasoning::verify_remediation`)
+
+Post-execution verification re-probes the system (disk %, service active status) and reports a `confidence_score` (0–100 %). A score below 50 % counts as failure for circuit-breaker purposes even if the command exited 0.
+
+---
 
 ## Implementation Timeline
 

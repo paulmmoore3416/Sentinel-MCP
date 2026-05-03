@@ -228,6 +228,7 @@ impl RemediationPlugin for DiskCleanupPlugin {
             },
             steps,
             estimated_duration_seconds: 120,
+            from_runbook: true,
         })
     }
     
@@ -364,6 +365,7 @@ impl RemediationPlugin for ServiceRestartPlugin {
             },
             steps,
             estimated_duration_seconds: 60,
+            from_runbook: true,
         })
     }
     

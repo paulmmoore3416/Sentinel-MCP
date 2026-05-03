@@ -79,7 +79,11 @@ WebSocket notifications, Prometheus metrics, and health checks
 ### 🆕 Production-Ready Features
 
 - **🔁 Retry Logic**: Exponential backoff with jitter for resilient operations
-- **⚡ Circuit Breakers**: Prevent cascading failures with automatic recovery
+- **⚡ Circuit Breakers**: Per-alert-type circuit breakers (Closed / HalfOpen / Open) that block execution after repeated failures and recover automatically — see `src/circuit_breaker/`
+- **📖 Runbook Registry**: Pre-tested, rollback-verified runbook templates for common alerts (`HighDiskUsage`, `ServiceDown`, `KubePodCrashLooping`, `HighMemoryUsage`) — AI generation is a fallback only
+- **🔄 Rollback Commands**: Every reversible remediation step (`systemctl`, `apt-get`, etc.) gets an auto-generated rollback command; irreversible operations are flagged as non-rollbackable
+- **📸 System Snapshots**: Pre-execution state capture of filesystem, services, and K8s resources for clean rollback boundaries — see `src/snapshot/`
+- **🔍 Deep Verification**: Post-remediation re-probe of disk usage and service status with a `confidence_score` (0–100 %) rather than just checking exit codes
 - **🔧 CLI Tool**: Comprehensive command-line interface for management
 - **📈 Metrics**: Prometheus-compatible metrics with Grafana dashboards
 - **🔔 WebSocket**: Real-time notifications for alert processing and remediation

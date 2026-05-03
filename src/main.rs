@@ -8,6 +8,7 @@ use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod alert;
+mod circuit_breaker;
 mod cli;
 mod config;
 mod error;
@@ -17,6 +18,8 @@ mod metrics;
 mod notifications;
 mod plugins;
 mod reasoning;
+mod runbook;
+mod snapshot;
 mod watsonx;
 
 #[tokio::main]

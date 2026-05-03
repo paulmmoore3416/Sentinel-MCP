@@ -336,6 +336,7 @@ mod tests {
                     rollback_command: None,
                 }],
                 estimated_duration_seconds: 30,
+                from_runbook: true,
             },
             execution_result: ExecutionResult {
                 success: true,
@@ -348,6 +349,8 @@ mod tests {
                 success: true,
                 details: "Disk space reduced to 75%".to_string(),
                 metrics: HashMap::new(),
+                alert_resolved: true,
+                confidence_score: 0.95,
             },
         }
     }

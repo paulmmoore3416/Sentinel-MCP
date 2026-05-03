@@ -59,6 +59,9 @@ regex = "1.10"
 # Markdown
 pulldown-cmark = "0.9"
 
+# Hashing
+sha2 = "0.10"
+
 # Random
 rand = "0.8"
 
