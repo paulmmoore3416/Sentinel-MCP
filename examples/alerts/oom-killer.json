@@ -1,0 +1,16 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "OomKillerInvoked",
+      "severity": "critical"
+    },
+    "annotations": {
+      "summary": "OOM Killer invoked",
+      "description": "The kernel OOM killer has terminated a process"
+    },
+    "startsAt": "2026-05-03T11:20:00Z"
+  }]
+}

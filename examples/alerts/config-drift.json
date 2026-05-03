@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "ConfigurationDrift",
+      "severity": "warning",
+      "file_path": "/etc/nginx/nginx.conf"
+    },
+    "annotations": {
+      "summary": "Configuration drift detected",
+      "description": "The configuration at /etc/nginx/nginx.conf drifted from version control"
+    },
+    "startsAt": "2026-05-03T11:50:00Z"
+  }]
+}

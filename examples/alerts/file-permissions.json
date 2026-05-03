@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "FilePermissionsInvalid",
+      "severity": "critical",
+      "path": "/etc/nginx/nginx.conf"
+    },
+    "annotations": {
+      "summary": "Invalid file permissions",
+      "description": "File /etc/nginx/nginx.conf has invalid ownership or permissions"
+    },
+    "startsAt": "2026-05-03T11:05:00Z"
+  }]
+}

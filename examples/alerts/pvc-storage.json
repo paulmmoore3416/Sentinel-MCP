@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "PvcStorageIssue",
+      "severity": "warning",
+      "namespace": "default"
+    },
+    "annotations": {
+      "summary": "PVC storage issue",
+      "description": "A PVC in the default namespace is experiencing issues"
+    },
+    "startsAt": "2026-05-03T11:25:00Z"
+  }]
+}

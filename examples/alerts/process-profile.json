@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "ProcessResourceSpike",
+      "severity": "warning",
+      "process": "python3"
+    },
+    "annotations": {
+      "summary": "Process resource spike detected",
+      "description": "The python3 process is consuming excessive resources"
+    },
+    "startsAt": "2026-05-03T11:10:00Z"
+  }]
+}

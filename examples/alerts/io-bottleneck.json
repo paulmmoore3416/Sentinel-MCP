@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "IoBottlenecksDetected",
+      "severity": "warning",
+      "device": "sda1"
+    },
+    "annotations": {
+      "summary": "IO bottleneck detected",
+      "description": "High IO wait time on device sda1"
+    },
+    "startsAt": "2026-05-03T11:15:00Z"
+  }]
+}

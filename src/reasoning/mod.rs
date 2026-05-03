@@ -105,6 +105,17 @@ pub struct SystemContext {
     pub db_status: Option<mcp::tools::DatabaseMetrics>,
     pub node_status: Option<mcp::tools::NodeDiagnostics>,
     pub tls_status: Option<mcp::tools::TlsVerification>,
+    pub firewall_status: Option<mcp::tools::FirewallStatus>,
+    pub file_permissions: Option<mcp::tools::FilePermissions>,
+    pub process_profile: Option<mcp::tools::ProcessProfile>,
+    pub io_bottlenecks: Option<mcp::tools::IoBottleneck>,
+    pub oom_killer_logs: Option<mcp::tools::OomLogs>,
+    pub pvc_status: Option<mcp::tools::PvcStatus>,
+    pub ingress_status: Option<mcp::tools::IngressStatus>,
+    pub helm_status: Option<mcp::tools::HelmStatus>,
+    pub replication_lag: Option<mcp::tools::ReplicationLag>,
+    pub queue_depth: Option<mcp::tools::QueueDepth>,
+    pub config_drift: Option<mcp::tools::ConfigDrift>,
 }
 
 /// Remediation plan
@@ -294,6 +305,17 @@ impl ReasoningEngine {
             db_status: None,
             node_status: None,
             tls_status: None,
+            firewall_status: None,
+            file_permissions: None,
+            process_profile: None,
+            io_bottlenecks: None,
+            oom_killer_logs: None,
+            pvc_status: None,
+            ingress_status: None,
+            helm_status: None,
+            replication_lag: None,
+            queue_depth: None,
+            config_drift: None,
         };
 
         if let Some(filesystem) = alert.labels.get("filesystem") {
@@ -378,6 +400,81 @@ impl ReasoningEngine {
                     if let Some(data) = response.data {
                         context.node_status = Some(data);
                     }
+                }
+            }
+        }
+
+        let alertname = alert.labels.get("alertname").map(|s| s.as_str());
+
+        if alertname == Some("FirewallRulesBlocked") {
+            if let Ok(response) = mcp::tools::check_firewall_rules().await {
+                context.firewall_status = response.data;
+            }
+        }
+        if alertname == Some("FilePermissionsInvalid") {
+            if let Some(path) = alert.labels.get("path") {
+                if let Ok(response) = mcp::tools::analyze_file_permissions(path).await {
+                    context.file_permissions = response.data;
+                }
+            }
+        }
+        if alertname == Some("ProcessResourceSpike") {
+            if let Some(process) = alert.labels.get("process") {
+                if let Ok(response) = mcp::tools::capture_process_profile(process).await {
+                    context.process_profile = response.data;
+                }
+            }
+        }
+        if alertname == Some("IoBottlenecksDetected") {
+            let device = alert.labels.get("device").map(|s| s.as_str());
+            if let Ok(response) = mcp::tools::check_io_bottlenecks(device).await {
+                context.io_bottlenecks = response.data;
+            }
+        }
+        if alertname == Some("OomKillerInvoked") {
+            if let Ok(response) = mcp::tools::search_oom_killer_logs().await {
+                context.oom_killer_logs = response.data;
+            }
+        }
+        if alertname == Some("PvcStorageIssue") {
+            if let Some(namespace) = alert.labels.get("namespace") {
+                if let Ok(response) = mcp::tools::check_pvc_storage_status(namespace).await {
+                    context.pvc_status = response.data;
+                }
+            }
+        }
+        if alertname == Some("IngressRoutingError") {
+            if let Some(namespace) = alert.labels.get("namespace") {
+                if let Ok(response) = mcp::tools::validate_ingress_routing(namespace).await {
+                    context.ingress_status = response.data;
+                }
+            }
+        }
+        if alertname == Some("HelmReleaseFailed") {
+            if let (Some(release), Some(namespace)) = (alert.labels.get("release"), alert.labels.get("namespace")) {
+                if let Ok(response) = mcp::tools::check_helm_release_status(release, namespace).await {
+                    context.helm_status = response.data;
+                }
+            }
+        }
+        if alertname == Some("DatabaseReplicationLag") {
+            if let Some(database) = alert.labels.get("database") {
+                if let Ok(response) = mcp::tools::check_replication_lag(database).await {
+                    context.replication_lag = response.data;
+                }
+            }
+        }
+        if alertname == Some("MessageQueueHighDepth") {
+            if let Some(queue_name) = alert.labels.get("queue_name") {
+                if let Ok(response) = mcp::tools::inspect_message_queue_depth(queue_name).await {
+                    context.queue_depth = response.data;
+                }
+            }
+        }
+        if alertname == Some("ConfigurationDrift") {
+            if let Some(file_path) = alert.labels.get("file_path") {
+                if let Ok(response) = mcp::tools::detect_config_drift(file_path).await {
+                    context.config_drift = response.data;
                 }
             }
         }

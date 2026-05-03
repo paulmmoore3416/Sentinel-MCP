@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "IngressRoutingError",
+      "severity": "critical",
+      "namespace": "production"
+    },
+    "annotations": {
+      "summary": "Ingress routing error",
+      "description": "Ingress routing is failing in the production namespace"
+    },
+    "startsAt": "2026-05-03T11:30:00Z"
+  }]
+}

@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "FirewallRulesBlocked",
+      "severity": "warning",
+      "port": "5432"
+    },
+    "annotations": {
+      "summary": "Firewall blocking essential port",
+      "description": "Port 5432 appears to be blocked by iptables"
+    },
+    "startsAt": "2026-05-03T11:00:00Z"
+  }]
+}

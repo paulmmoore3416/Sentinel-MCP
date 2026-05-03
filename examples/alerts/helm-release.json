@@ -1,0 +1,18 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "HelmReleaseFailed",
+      "severity": "critical",
+      "release": "payment-service",
+      "namespace": "default"
+    },
+    "annotations": {
+      "summary": "Helm release failed",
+      "description": "The payment-service helm release is in a failed state"
+    },
+    "startsAt": "2026-05-03T11:35:00Z"
+  }]
+}

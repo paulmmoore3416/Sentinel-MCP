@@ -83,7 +83,7 @@ WebSocket notifications, Prometheus metrics, and health checks
 
 - **🔁 Retry Logic**: Exponential backoff with jitter for resilient operations
 - **⚡ Circuit Breakers**: Per-alert-type circuit breakers (Closed / HalfOpen / Open) that block execution after repeated failures and recover automatically — see `src/circuit_breaker/`
-- **📖 Runbook Registry**: Pre-tested, rollback-verified runbook templates for common alerts (`HighDiskUsage`, `ServiceDown`, `KubePodCrashLooping`, `HighMemoryUsage`, `EndpointUnreachable`, `DatabaseHighConnections`, `NodeNotReady`, `TLSCertificateExpiring`) — AI generation is a fallback only
+- **📖 Runbook Registry**: Pre-tested, rollback-verified runbook templates for common alerts (`HighDiskUsage`, `ServiceDown`, `KubePodCrashLooping`, `HighMemoryUsage`, `EndpointUnreachable`, `DatabaseHighConnections`, `NodeNotReady`, `TLSCertificateExpiring`, `FirewallRulesBlocked`, `FilePermissionsInvalid`, `ProcessResourceSpike`, `IoBottlenecksDetected`, `OomKillerInvoked`, `PvcStorageIssue`, `IngressRoutingError`, `HelmReleaseFailed`, `DatabaseReplicationLag`, `MessageQueueHighDepth`, `ConfigurationDrift`) — AI generation is a fallback only
 - **🔄 Rollback Commands**: Every reversible remediation step (`systemctl`, `apt-get`, etc.) gets an auto-generated rollback command; irreversible operations are flagged as non-rollbackable
 - **📸 System Snapshots**: Pre-execution state capture of filesystem, services, and K8s resources for clean rollback boundaries — see `src/snapshot/`
 - **🔍 Deep Verification**: Post-remediation re-probe of disk usage and service status with a `confidence_score` (0–100 %) rather than just checking exit codes
@@ -199,6 +199,17 @@ sentinel-mcp test --alert examples/alerts/network-latency.json
 sentinel-mcp test --alert examples/alerts/db-connections-high.json
 sentinel-mcp test --alert examples/alerts/node-not-ready.json
 sentinel-mcp test --alert examples/alerts/tls-cert-expiring.json
+sentinel-mcp test --alert examples/alerts/firewall-rules.json
+sentinel-mcp test --alert examples/alerts/file-permissions.json
+sentinel-mcp test --alert examples/alerts/process-profile.json
+sentinel-mcp test --alert examples/alerts/io-bottleneck.json
+sentinel-mcp test --alert examples/alerts/oom-killer.json
+sentinel-mcp test --alert examples/alerts/pvc-storage.json
+sentinel-mcp test --alert examples/alerts/ingress-routing.json
+sentinel-mcp test --alert examples/alerts/helm-release.json
+sentinel-mcp test --alert examples/alerts/replication-lag.json
+sentinel-mcp test --alert examples/alerts/queue-depth.json
+sentinel-mcp test --alert examples/alerts/config-drift.json
 
 # Simulate failure scenarios
 sentinel-mcp simulate disk-full

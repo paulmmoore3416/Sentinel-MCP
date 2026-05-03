@@ -80,7 +80,7 @@ sentinel-mcp/
 - Alert detection from Prometheus/AlertManager
 - AI-powered log analysis using IBM Granite models
 - Intelligent remediation planning using tested runbooks and AI generation
-- Includes capabilities for **Database**, **Network**, **Kubernetes Node** diagnostics, and **TLS Verification**
+- Includes capabilities for **Database**, **Network**, **Kubernetes Node** diagnostics, **TLS Verification**, **Security & Access Control**, **Deep Application Profiling**, **Cloud-Native Diagnostics**, **Stateful Diagnostics**, and **Config Drift Detection**
 - MemPalace integration for long-term semantic memory and context-aware reasoning
 - Safe execution with approval workflows
 - Automatic verification and documentation

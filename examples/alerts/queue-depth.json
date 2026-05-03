@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "MessageQueueHighDepth",
+      "severity": "warning",
+      "queue_name": "order-processing"
+    },
+    "annotations": {
+      "summary": "Message queue depth too high",
+      "description": "The order-processing queue has too many pending messages"
+    },
+    "startsAt": "2026-05-03T11:45:00Z"
+  }]
+}

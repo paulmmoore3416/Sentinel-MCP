@@ -1,0 +1,17 @@
+{
+  "version": "4",
+  "status": "firing",
+  "alerts": [{
+    "status": "firing",
+    "labels": {
+      "alertname": "DatabaseReplicationLag",
+      "severity": "warning",
+      "database": "analytics-db"
+    },
+    "annotations": {
+      "summary": "Database replication lag high",
+      "description": "Replication lag for analytics-db exceeds threshold"
+    },
+    "startsAt": "2026-05-03T11:40:00Z"
+  }]
+}
